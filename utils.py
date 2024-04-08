@@ -170,7 +170,6 @@ def update_buffer(data_buffer, new_data, notch=False, filter_state=None):
                                    (data_buffer.shape[1], 1)).T
         new_data, filter_state = lfilter(NOTCH_B, NOTCH_A, new_data, axis=0,
                                          zi=filter_state)
-
     new_buffer = np.concatenate((data_buffer, new_data), axis=0)
     new_buffer = new_buffer[new_data.shape[0]:, :]
 
