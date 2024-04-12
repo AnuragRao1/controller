@@ -92,7 +92,7 @@ if __name__ == "__main__":
 
     # Initialize the band power buffer (for plotting)
     # bands will be ordered: [delta, theta, alpha, beta]
-    band_buffer = np.zeros((n_win_test, 4, 4))
+    band_buffer = np.zeros((n_win_test, 4, 4)) # time x channel x band
 
     cal_buffer = np.zeros((cal_epochs, 4, 4))
 
@@ -106,7 +106,11 @@ if __name__ == "__main__":
         # track ratios and differences 
         ratios = []
         differences = []
-        band_power_tracker = {name: [] for name in ['Delta', 'Theta', 'Alpha','Beta']}
+        band_power_tracker = {}
+        for i in range(4):
+            for band in ['Delta', 'Theta', 'Alpha','Beta']:
+                band_power_tracker[f"Channel_{str(i)}_{band}"] = []
+
         # fig, ax = plt.subplots()
         # line, = ax.plot([])
         # plt.show()
@@ -146,10 +150,10 @@ if __name__ == "__main__":
             smooth_band_powers = np.mean(band_buffer, axis=0)
 
             # add data to store in csv
-            band_power_tracker['Delta'].append(smooth_band_powers[Band.Delta])
-            band_power_tracker['Theta'].append(smooth_band_powers[Band.Theta])
-            band_power_tracker['Alpha'].append(smooth_band_powers[Band.Alpha])
-            band_power_tracker['Beta'].append(smooth_band_powers[Band.Beta])
+            bands = ['Delta', 'Theta', 'Alpha', 'Beta']
+            for i in range(4):
+                for j in range(4):
+                    band_power_tracker[f'Channel_{str(i)}_{bands[j]}'].append(smooth_band_powers[i,j])
 
             
             # print('Delta: ', band_powers[Band.Delta])
@@ -161,8 +165,10 @@ if __name__ == "__main__":
 
 
             ## Add to calibration period until full before doing analysis
-            if not np.any(cal_buffer[0,:]):
-                cal_buffer, _ = utils.update_buffer(cal_buffer, np.asarray([band_powers]))
+            if not np.any(cal_buffer[0,:,:]):
+                for i in range(4):
+                    cal_buffer[:,i,:], _ = utils.update_buffer(cal_buffer[:,i,:], np.asarray([band_powers[i,:]]))
+                    
                 smooth_cal_band_powers = np.mean(cal_buffer, axis=0)
                 print("Mean band power over calibration period: ", smooth_cal_band_powers)
 
@@ -181,16 +187,14 @@ if __name__ == "__main__":
             # Beta Protocol:
             # Beta waves have been used as a measure of mental activity and concentration
             # This beta over theta ratio is commonly used as neurofeedback for ADHD
-            beta_metric = smooth_band_powers[Band.Beta] / \
-                smooth_band_powers[Band.Theta]
+            beta_metric = np.divide(smooth_band_powers[:,Band.Beta], smooth_band_powers[:,Band.Theta])
             print('Beta Concentration: ', beta_metric)
             
             
             ####THINGS TO TRY
             # gather baseline data for a bit, test ratio/difference from baseline as threshold
-            beta_baseline = smooth_cal_band_powers[Band.Beta] / \
-                smooth_cal_band_powers[Band.Theta]
-            beta_ratio = beta_metric / beta_baseline
+            beta_baseline = np.divide(smooth_cal_band_powers[:,Band.Beta], smooth_cal_band_powers[:,Band.Theta])
+            beta_ratio = np.divide(beta_metric, beta_baseline)
             beta_difference = beta_metric - beta_baseline
 
             #print('Beta difference: ', beta_difference)
@@ -201,10 +205,9 @@ if __name__ == "__main__":
             differences.append(beta_difference)
 
             #continuous change over time
-            z_difference = (beta_metric - np.mean(differences)) / np.std(differences)
-            z_ratio = (beta_ratio - np.mean(ratios)) / np.std(ratios)
-            concat_score = (z_difference + z_ratio) / 2
-
+            z_difference = np.divide(beta_metric - np.mean(np.array(differences, axis=0)), np.std(np.array(differences), axis=0))
+            z_ratio = np.divide(beta_ratio - np.mean(np.array(ratios), axis=0), np.std(np.array(ratios), axis=0))
+            
             # print("Scores: "+ str(concat_score))
             # print("Z scores for ratio: " + str((beta_ratio - np.mean(ratios)) / np.std(ratios)))
 
@@ -223,8 +226,11 @@ if __name__ == "__main__":
 
 
             # gather baseline data for a bit, test approximate entropy
-            
-
+            ## TESTING WITH 1 CHANNEL FOR NOW
+            channel_diff = np.array(differences)[:,0]
+            channel_ratio = np.array(ratios)[:,0]
+            diff_entropy = ApEn(channel_diff, 3, 0.2) # m = window size, r = distance threshold
+            ratio_entropy = ApEn(channel_ratio, 3, 0.1)
             # wavelet -> concentration
 
             # NOTES:
