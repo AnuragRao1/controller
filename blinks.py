@@ -153,6 +153,8 @@ if __name__ == "__main__":
                     # Check if current delta power exceeds the baseline by a certain threshold
                 if band_powers[Band.Delta] > delta_baseline * 1.5 and not blink_detected_recently:
                     print("Blink detected!")
+                    with open("commands.txt", "w") as file:
+                        file.write("blink!!")
                     blink_detected_recently = True
                 elif band_powers[Band.Delta] <= delta_baseline * 1.5:
                     blink_detected_recently = False
