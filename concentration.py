@@ -79,7 +79,7 @@ if __name__ == "__main__":
     """ 2. INITIALIZE BUFFERS """
 
     # Initialize raw EEG data buffer
-    eeg_buffer = np.zeros((int(fs * BUFFER_LENGTH), 4))
+    eeg_buffer = np.zeros((int(fs * BUFFER_LENGTH), 4, 1))
     filter_state = None  # for use with the notch filter
 
     # Compute the number of epochs in "buffer_length"
@@ -140,7 +140,7 @@ if __name__ == "__main__":
                                              EPOCH_LENGTH * fs)
 
             # Compute band powers
-            band_powers = np.zeros(4,4)
+            band_powers = np.zeros((4,4))
             for i in range(4):
                 band_powers[i,:] = utils.compute_band_powers(data_epoch[:,i], fs)
                 band_buffer[:,i,:], _ = utils.update_buffer(band_buffer[:,i,:],
@@ -204,34 +204,21 @@ if __name__ == "__main__":
             ratios.append(beta_ratio)
             differences.append(beta_difference)
 
-            #continuous change over time
-            z_difference = np.divide(beta_metric - np.mean(np.array(differences, axis=0)), np.std(np.array(differences), axis=0))
-            z_ratio = np.divide(beta_ratio - np.mean(np.array(ratios), axis=0), np.std(np.array(ratios), axis=0))
+            # #continuous change over time
+            # z_difference = np.divide(beta_metric - np.mean(np.array(differences), axis=0)), np.std(np.array(differences), axis=0)
+            # z_ratio = np.divide(beta_ratio - np.mean(np.array(ratios), axis=0), np.std(np.array(ratios), axis=0))
             
             # print("Scores: "+ str(concat_score))
             # print("Z scores for ratio: " + str((beta_ratio - np.mean(ratios)) / np.std(ratios)))
 
-            # line.set_xdata(np.linspace(0,20,1))
-            # line.set_ydata(ratios[-20:])
-            # fig.canvas.draw()
-            # fig.canvas.flush_events()
-            # plt.pause(0.002)
-
-            # ax.plot(ratios[-20:], label="beta_ratio")
-            # ax.plot(differences[-20:], label='beta_difference')
-            # ax.set_xlabel("iterations")
-            # ax.legend()
-            # fig.show()
-
-
 
             # gather baseline data for a bit, test approximate entropy
             ## TESTING WITH 1 CHANNEL FOR NOW
-            channel_diff = np.array(differences)[:,0]
-            channel_ratio = np.array(ratios)[:,0]
-            diff_entropy = ApEn(channel_diff, 3, 0.2) # m = window size, r = distance threshold
-            ratio_entropy = ApEn(channel_ratio, 3, 0.1)
-            # wavelet -> concentration
+            channel_diff = np.array(differences)[:,1]
+            channel_ratio = np.array(ratios)[:,1]
+            diff_entropy = utils.ApEn(channel_diff, 3, 0.2) # m = window size, r = distance threshold
+            ratio_entropy = utils.ApEn(channel_ratio, 3, 0.1)
+
 
             # NOTES:
             # beta ratio for channel 3 works the best

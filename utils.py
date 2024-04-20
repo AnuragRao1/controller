@@ -163,7 +163,6 @@ def update_buffer(data_buffer, new_data, notch=False, filter_state=None):
     """
     if new_data.ndim == 1:
         new_data = new_data.reshape(-1, data_buffer.shape[1])
-
     if notch:
         if filter_state is None:
             filter_state = np.tile(lfilter_zi(NOTCH_B, NOTCH_A),
