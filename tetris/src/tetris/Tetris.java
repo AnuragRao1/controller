@@ -104,11 +104,11 @@ public class Tetris {
             Tetromino.draw(t, board, t.pos.x, t.pos.y);
             return;
         }
-        String fileContent = readFromFile();
-        if (fileContent == "blink!!") {
-            movement.rotateRight();
-            writeToFile();
-        }
+//        String fileContent = readFromFile();
+//        if (fileContent == "blink!!") {
+//            movement.rotateRight();
+//            writeToFile();
+//        }
         if (StdDraw.hasNextKeyTyped()) {
             char key = StdDraw.nextKeyTyped();
             if (key == 'a') {
