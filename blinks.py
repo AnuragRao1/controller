@@ -143,6 +143,9 @@ if __name__ == "__main__":
 
             print('Delta: ', band_powers[Band.Delta])
 # Inside the while loop, after computing band powers
+            blink_threshold = delta_baseline * 1.5  # example threshold
+            left_eye_blink = band_powers[1, Band.Delta] > blink_threshold
+            right_eye_blink = band_powers[2, Band.Delta] > blink_threshold
             if len(delta_powers_for_baseline) < num_chunks_for_baseline:
                 # Collect delta powers until you have enough for a stable baseline
                 delta_powers_for_baseline.append(band_powers[Band.Delta])
@@ -157,6 +160,16 @@ if __name__ == "__main__":
                         file.write("blink!!")
                     blink_detected_recently = True
                 elif band_powers[Band.Delta] <= delta_baseline * 1.5:
+                    blink_detected_recently = False
+                elif left_eye_blink and not blink_detected_recently:
+                    print("Left eye blink detected!")
+                    blink_detected_recently = True
+                elif not left_eye_blink:
+                        blink_detected_recently = False
+                if right_eye_blink and not blink_detected_recently:
+                    print("Right eye blink detected!")
+                    blink_detected_recently = True
+                elif not right_eye_blink:
                     blink_detected_recently = False
                 
 
