@@ -188,7 +188,7 @@ if __name__ == "__main__":
             # Beta waves have been used as a measure of mental activity and concentration
             # This beta over theta ratio is commonly used as neurofeedback for ADHD
             beta_metric = np.divide(smooth_band_powers[:,Band.Beta], smooth_band_powers[:,Band.Theta])
-            print('Beta Concentration: ', beta_metric)
+            #print('Beta Concentration: ', beta_metric)
             
             
             ####THINGS TO TRY
@@ -197,9 +197,8 @@ if __name__ == "__main__":
             beta_ratio = np.divide(beta_metric, beta_baseline)
             beta_difference = beta_metric - beta_baseline
 
-            #print('Beta difference: ', beta_difference)
+            print('Beta difference: ', beta_difference)
             #print('Beta ratio: ', beta_ratio)
-
 
             ratios.append(beta_ratio)
             differences.append(beta_difference)
@@ -213,12 +212,12 @@ if __name__ == "__main__":
 
 
             # gather baseline data for a bit, test approximate entropy
-            ## TESTING WITH 1 CHANNEL FOR NOW
-            channel_diff = np.array(differences)[:,1]
-            channel_ratio = np.array(ratios)[:,1]
-            diff_entropy = utils.ApEn(channel_diff, 3, 0.2) # m = window size, r = distance threshold
-            ratio_entropy = utils.ApEn(channel_ratio, 3, 0.1)
-
+            # ## TESTING WITH 1 CHANNEL FOR NOW
+            # channel_diff = np.array(differences)[:,1]
+            # channel_ratio = np.array(ratios)[:,1]
+            # diff_entropy = utils.ApEn(channel_diff, 3, 0.2) # m = window size, r = distance threshold
+            # ratio_entropy = utils.ApEn(channel_ratio, 3, 0.1)
+            # print("difference ApEn: " + str(diff_entropy))
 
             # NOTES:
             # beta ratio for channel 3 works the best
