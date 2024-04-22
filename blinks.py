@@ -35,11 +35,13 @@ CAL_LENGTH = 12
 # Index of the channel(s) (electrodes) to be used
 # 0 = left ear, 1 = left forehead, 2 = right forehead, 3 = right ear
 INDEX_CHANNEL = [0,1,2,3]
-delta_powers_for_baseline = []
 num_chunks_for_baseline = 10  # Number of chunks to use for baseline calculation
+delta_powers_for_baseline = np.zeros((num_chunks_for_baseline, 4))
 detected_blinks = False
 iteration_number = 0
 blink_detected_recently = False
+left_blink_detected_recently = False
+right_blink_detected_recently = False
 if __name__ == "__main__":
     """ 1. CONNECT TO EEG STREAM """
     # Search for active LSL streams
@@ -114,40 +116,53 @@ if __name__ == "__main__":
             # Compute the average band powers for all epochs in buffer
             # This helps to smooth out noise
             smooth_band_powers = np.mean(band_buffer, axis=0)
-            print('Delta: ', band_powers[Band.Delta])
+            print('Delta: ', band_powers[1,Band.Delta])
             # add data to store in csv
             bands = ['Delta', 'Theta', 'Alpha', 'Beta']
             for i in range(4):
                 for j in range(4):
                     band_power_tracker[f'Channel_{str(i)}_{bands[j]}'].append(smooth_band_powers[i,j])
-            blink_threshold = delta_baseline * 1.5  # example threshold
-            left_eye_blink = band_powers[1, Band.Delta] > blink_threshold
-            right_eye_blink = band_powers[2, Band.Delta] > blink_threshold
-            if len(delta_powers_for_baseline) < num_chunks_for_baseline:
+            if not np.any(delta_powers_for_baseline[0]):
                 # Collect delta powers until you have enough for a stable baseline
-                delta_powers_for_baseline.append(band_powers[Band.Delta])
-                if len(delta_powers_for_baseline) == num_chunks_for_baseline:
+                delta_powers_for_baseline, _ = utils.update_buffer(delta_powers_for_baseline, np.asarray([band_powers[:,Band.Delta]]))
+                if np.any(delta_powers_for_baseline[0]):
                     # Calculate the average delta power for the baseline
-                    delta_baseline = sum(delta_powers_for_baseline) / num_chunks_for_baseline
+                    delta_baseline = np.mean(delta_powers_for_baseline, axis=0)
             else:
                     # Check if current delta power exceeds the baseline by a certain threshold
-                if band_powers[Band.Delta] > delta_baseline * 1.5 and not blink_detected_recently:
-                    print("Blink detected!")
-                    with open("commands.txt", "w") as file:
-                        file.write("blink!!")
+                blink_threshold = delta_baseline * 1.25  # example threshold
+                left_eye_blink = band_powers[1, Band.Delta] > blink_threshold[1]
+                right_eye_blink = band_powers[2, Band.Delta] > blink_threshold[2]
+                # if band_powers[1,Band.Delta] > delta_baseline[1] * 1.5 and not blink_detected_recently:
+                #         print("Blink detected!")
+                #         with open("commands.txt", "w") as file:
+                #             file.write("blink!!")
+                #         blink_detected_recently = True
+                # elif band_powers[1,Band.Delta] <= delta_baseline[1] * 1.5:
+                #         blink_detected_recently = False
+                if left_eye_blink and right_eye_blink and not blink_detected_recently:
+                    print("Both eyes blink!")
                     blink_detected_recently = True
-                elif band_powers[Band.Delta] <= delta_baseline * 1.5:
-                    blink_detected_recently = False
-                elif left_eye_blink and not blink_detected_recently:
+                    with open("commands.txt", 'w') as f:
+                        f.write("B")
+                elif left_eye_blink and not left_blink_detected_recently:
                     print("Left eye blink detected!")
-                    blink_detected_recently = True
-                elif not left_eye_blink:
-                        blink_detected_recently = False
-                if right_eye_blink and not blink_detected_recently:
+                    left_blink_detected_recently = True
+                    with open("commands.txt","w") as f:
+                        f.write("L")
+                elif right_eye_blink and not right_blink_detected_recently:
                     print("Right eye blink detected!")
-                    blink_detected_recently = True
-                elif not right_eye_blink:
+                    right_blink_detected_recently = True
+                    with open("commands.txt", "w") as f:
+                        f.write("R")
+      
+
+                if not (left_eye_blink and right_eye_blink):
                     blink_detected_recently = False
+                if not left_eye_blink:
+                    left_blink_detected_recently = False
+                if not right_eye_blink:
+                    right_blink_detected_recently = False
             # print('Delta: ', band_powers[Band.Delta])
             # if band_powers[Band.Delta]>=1:
             #     print("Blink!")
@@ -171,7 +186,7 @@ if __name__ == "__main__":
             # Beta waves have been used as a measure of mental activity and concentration
             # This beta over theta ratio is commonly used as neurofeedback for ADHD
             beta_metric = np.divide(smooth_band_powers[:,Band.Beta], smooth_band_powers[:,Band.Theta])
-            print('Beta Concentration: ', beta_metric)
+            #print('Beta Concentration: ', beta_metric)
             ####THINGS TO TRY
             # gather baseline data for a bit, test ratio/difference from baseline as threshold
             beta_baseline = np.divide(smooth_cal_band_powers[:,Band.Beta], smooth_cal_band_powers[:,Band.Theta])
@@ -188,10 +203,10 @@ if __name__ == "__main__":
             # print("Z scores for ratio: " + str((beta_ratio - np.mean(ratios)) / np.std(ratios)))
             # gather baseline data for a bit, test approximate entropy
             ## TESTING WITH 1 CHANNEL FOR NOW
-            channel_diff = np.array(differences)[:,1]
-            channel_ratio = np.array(ratios)[:,1]
-            diff_entropy = utils.ApEn(channel_diff, 3, 0.2) # m = window size, r = distance threshold
-            ratio_entropy = utils.ApEn(channel_ratio, 3, 0.1)
+            # channel_diff = np.array(differences)[:,1]
+            # channel_ratio = np.array(ratios)[:,1]
+            # diff_entropy = utils.ApEn(channel_diff, 3, 0.2) # m = window size, r = distance threshold
+            # ratio_entropy = utils.ApEn(channel_ratio, 3, 0.1)
             # NOTES:
             # beta ratio for channel 3 works the best
     except KeyboardInterrupt:
