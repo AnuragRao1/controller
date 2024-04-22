@@ -4,12 +4,11 @@ import edu.princeton.cs.algs4.StdDraw;
 import tileengine.TETile;
 import tileengine.TERenderer;
 import tileengine.Tileset;
-import java.io.File;  // Import the File class
-import java.io.FileNotFoundException;  // Import this class to handle errors
-import java.util.Scanner;
 import java.util.*;
 import java.io.FileWriter;   // Import the FileWriter class
 import java.io.IOException;
+import java.nio.file.Paths;
+import java.nio.file.Files;
 
 /**
  *  Provides the logic for Tetris.
@@ -104,11 +103,22 @@ public class Tetris {
             Tetromino.draw(t, board, t.pos.x, t.pos.y);
             return;
         }
-//        String fileContent = readFromFile();
-//        if (fileContent == "blink!!") {
-//            movement.rotateRight();
-//            writeToFile();
-//        }
+
+        String filePath = "../../../commands.txt";
+        String content = null;
+
+        try {
+            content = Files.readString(Paths.get(filePath));
+        } catch (IOException e) {
+            System.out.println("Error occurred while reading the file:");
+            e.printStackTrace();
+        }
+
+        if (content == "blink!!") {
+            movement.rotateRight();
+            writeToFile();
+        }
+
         if (StdDraw.hasNextKeyTyped()) {
             char key = StdDraw.nextKeyTyped();
             if (key == 'a') {
@@ -122,23 +132,6 @@ public class Tetris {
             }
         }
         Tetromino.draw(t, board, t.pos.x, t.pos.y);
-    }
-
-    private String readFromFile() {
-        String filePath = "/Users/justinechoueiri/Desktop/ntab/controller/controller/commands.txt";
-        String data = null;
-        try {
-            File myObj = new File(filePath);
-            Scanner myReader = new Scanner(myObj);
-            while (myReader.hasNextLine()) {
-                data = myReader.nextLine();
-            }
-            myReader.close();
-        } catch (FileNotFoundException e) {
-            System.out.println("An error occurred.");
-            e.printStackTrace();
-        }
-        return data;
     }
 
     private void writeToFile() {
