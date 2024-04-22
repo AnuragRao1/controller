@@ -103,8 +103,8 @@ public class Tetris {
             Tetromino.draw(t, board, t.pos.x, t.pos.y);
             return;
         }
-
-        String filePath = "../../../commands.txt";
+        String userHome = System.getProperty("user.home");
+        String filePath = userHome + "/Desktop/ntab/controller/controller/tetris/src/tetris/commands.txt";
         String content = null;
 
         try {
@@ -114,8 +114,17 @@ public class Tetris {
             e.printStackTrace();
         }
 
-        if (content == "blink!!") {
+        if (Objects.equals(content, "B")) {
+            System.out.println("detected blink");
             movement.rotateRight();
+            writeToFile();
+        } else if (Objects.equals(content, "L")) {
+            System.out.println("detected left blink");
+            movement.tryMove(-1, 0);
+            writeToFile();
+        } else if (Objects.equals(content, "R")) {
+            System.out.println("detected right blink");
+            movement.tryMove(1, 0);
             writeToFile();
         }
 
@@ -136,7 +145,10 @@ public class Tetris {
 
     private void writeToFile() {
         try {
-            FileWriter myWriter = new FileWriter("filename.txt");
+            String userHome = System.getProperty("user.home");
+            String filePath = userHome + "/Desktop/ntab/controller/controller/tetris/src/tetris/commands.txt";
+
+            FileWriter myWriter = new FileWriter(filePath);
             myWriter.write("");
             myWriter.close();
             System.out.println("Successfully wrote to the file.");
